@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Agent Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .markdown-body img {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2z"></path></svg>
+                <h1 class="text-xl font-bold text-gray-800">AI Tech Blog Agent</h1>
+            </div>
+            <div class="text-sm text-gray-500">Powered by LangGraph & FastAPI</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 flex flex-col md:flex-row gap-6">
+        
+        <!-- Sidebar Controls -->
+        <div class="w-full md:w-1/3 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-semibold mb-4">Generate New Post</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Research Topic</label>
+                        <input type="text" id="topic" placeholder="e.g. GraphRAG Frameworks in 2026" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    
+                    <button id="generateBtn" onclick="generateBlog()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <span>Generate Article</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </button>
+                </div>
+                
+                <div id="loadingStatus" class="hidden mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <div class="flex items-center gap-3 text-blue-700">
+                        <div class="loader"></div>
+                        <div class="text-sm font-medium">
+                            <p>Agent is researching...</p>
+                            <p class="text-xs text-blue-500 font-normal mt-1">This may take 1-2 minutes as the AI plans, writes parallel sections, and generates images.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-3">API Requirements</h3>
+                <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                    <li><code class="bg-gray-100 px-1 py-0.5 rounded text-pink-600">OPENAI_API_KEY</code></li>
+                    <li><code class="bg-gray-100 px-1 py-0.5 rounded text-pink-600">TAVILY_API_KEY</code></li>
+                    <li><code class="bg-gray-100 px-1 py-0.5 rounded text-pink-600">GOOGLE_API_KEY</code></li>
+                </ul>
+                <p class="text-xs text-gray-500 mt-3">Ensure these are exported in your terminal before running the server.</p>
+            </div>
+        </div>
+
+        <!-- Output Area -->
+        <div class="w-full md:w-2/3">
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200 min-h-[600px]">
+                <div id="outputArea" class="prose prose-blue max-w-none markdown-body">
+                    <div class="text-center text-gray-400 mt-20">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p class="text-lg">Your generated blog post will appear here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        async function generateBlog() {
+            const topicInput = document.getElementById('topic').value.trim();
+            if (!topicInput) {
+                alert("Please enter a topic first.");
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loadingStatus = document.getElementById('loadingStatus');
+            const outputArea = document.getElementById('outputArea');
+
+            // Set loading state
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            loadingStatus.classList.remove('hidden');
+            outputArea.innerHTML = '<div class="text-center text-blue-500 mt-20 animate-pulse font-medium">Orchestrating agents... Please wait.</div>';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topicInput })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Server Error");
+                }
+
+                const data = await response.json();
+                
+                // Render Markdown
+                outputArea.innerHTML = marked.parse(data.markdown);
+            } catch (error) {
+                outputArea.innerHTML = `<div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    <strong class="font-bold">Execution Failed:</strong>
+                    <span class="block mt-1">${error.message}</span>
+                    <span class="block mt-2 text-sm text-red-600">Check your API keys in the terminal where you ran the server.</span>
+                </div>`;
+            } finally {
+                // Restore state
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                loadingStatus.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
