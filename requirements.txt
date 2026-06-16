@@ -7,3 +7,4 @@ langchain-tavily>=0.1.1
 langgraph>=0.0.30
 requests>=2.31.0
 python-dotenv>=1.0.1
+langchain-google-genai>=1.0.3
